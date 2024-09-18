@@ -18,7 +18,6 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
-# from . import util
 
 class SearchProblem:
     """
@@ -108,7 +107,7 @@ def depthFirstSearch(problem):
             # Set state and path for the current successor.
             successor_state, successor_path = successor[0], (path + [successor[1]])
 
-            # If the first node has not been visited, push it to the frontier.
+            # If the successor has not been visited, push it to the frontier.
             if successor_state not in visited:
                 frontier.push((successor_state, successor_path))
 
@@ -155,8 +154,8 @@ def breadthFirstSearch(problem):
             # Set state and path for the current successor.
             successor_state, successor_path = successor[0], (path + [successor[1]])
 
-            # If the first node has not been visited, push it to the frontier.
-            if successor[0] not in visited and successor[0] not in states_in_queue:
+            # If the successor has not been visited, push it to the frontier.
+            if successor_state not in visited and successor_state not in states_in_queue:
                 frontier.push((successor_state, successor_path))
 
     # Return an empty path if no goal state is found.
@@ -199,10 +198,11 @@ def uniformCostSearch(problem):
         # Check for each possible successor given the current state.
         for successor in problem.getSuccessors(state):
 
-            # Set state and path for the current successor.
+            # Set state, path, and cost for the current successor.
             successor_state, successor_path = successor[0], (path + [successor[1]])
             path_cost = problem.getCostOfActions(successor_path)
 
+            # If the successor has not been visited, push it to the frontier.
             if successor_state not in visited and successor_state not in states_in_priority_queue:
                 frontier.push((successor_state, successor_path), path_cost)
 
@@ -213,10 +213,10 @@ def uniformCostSearch(problem):
                     if successor_state == states_in_priority_queue[i]:
                         stored_cost = frontier.heap[i][0]
 
-                        # If the current path cost is less, update the tuple and push the current successor to the frontier.
+                        # If the current path cost is less, update the tuple and the current successor in the frontier.
                         if path_cost <= stored_cost:
                             frontier.heap[i] = (stored_cost, frontier.heap[i][1] , (successor_state, successor_path) )
-                            frontier.update( (successor_state, successor_path), path_cost )
+                            frontier.update((successor_state, successor_path), path_cost)
 
     # Return an empty path if no goal state is found.
     return []
@@ -239,11 +239,12 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     if problem.isGoalState(state):
         return path
 
-    # TODO:
+    # Calculate the combined cost and heuristic of the initial state.
+    heuristic_cost = problem.getCostOfActions(path) + heuristic(state, problem)
 
     # Create a PriorityQueue and push the initial start state.
     frontier = util.PriorityQueue()
-    frontier.push((state, path), 0)
+    frontier.push((state, path), heuristic_cost)
 
     # Create a set of visited states.
     visited = set()
@@ -269,10 +270,13 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
             # Set state and path for the current successor.
             successor_state, successor_path = successor[0], (path + [successor[1]])
-            path_cost = problem.getCostOfActions(successor_path)
+            
+            # Calculate the combined cost and heuristic of the successor.
+            successor_heuristic_cost = problem.getCostOfActions(successor_path) + heuristic(successor_state, problem)
 
+            # If the successor has not been visited, push it to the frontier.
             if successor_state not in visited and successor_state not in states_in_priority_queue:
-                frontier.push((successor_state, successor_path), path_cost)
+                frontier.push((successor_state, successor_path), successor_heuristic_cost)
 
             # If the state has already been visited, compare and update the costs of its path.
             else:
@@ -281,10 +285,10 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                     if successor_state == states_in_priority_queue[i]:
                         stored_cost = frontier.heap[i][0]
 
-                        # If the current path cost is less, update the tuple and push the current successor to the frontier.
-                        if path_cost <= stored_cost:
+                        # If the current path cost is less, update the tuple and the current successor in the frontier.
+                        if successor_heuristic_cost <= stored_cost:
                             frontier.heap[i] = (stored_cost, frontier.heap[i][1] , (successor_state, successor_path) )
-                            frontier.update( (successor_state, successor_path), path_cost )
+                            frontier.update((successor_state, successor_path), successor_heuristic_cost)
 
     # Return an empty path if no goal state is found.
     return []
