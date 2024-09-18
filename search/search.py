@@ -18,6 +18,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+# from . import util
 
 class SearchProblem:
     """
@@ -73,31 +74,152 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem):
-    """
-    Search the deepest nodes in the search tree first.
+    """Search the deepest nodes in the search tree first."""
 
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
+    # Create the initial state and path.
+    state = problem.getStartState()
+    path = []
 
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
+    # If the starting point is the goal, return the path.
+    if problem.isGoalState(state):
+        return path
 
-    print("Start:", problem.getStartState())
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
-    """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Create a Stack and push the initial start state.
+    frontier = util.Stack()
+    frontier.push((state, path))
+
+    # Create a set of visited states.
+    visited = set()
+
+    # Continuosly search for the next possible successor until a goal state is found.
+    while not frontier.isEmpty():
+        state, path = frontier.pop()
+
+        # If the current state is the goal, return the path.
+        if problem.isGoalState(state):
+            return path
+
+        # Add the current state to the set.
+        visited.add(state)
+
+        # Check for each possible successor given the current state.
+        for successor in problem.getSuccessors(state):
+
+            # Set state and path for the current successor.
+            successor_state, successor_path = successor[0], (path + [successor[1]])
+
+            # If the first node has not been visited, push it to the frontier.
+            if successor_state not in visited:
+                frontier.push((successor_state, successor_path))
+
+    # Return an empty path if no goal state is found.
+    return []
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # Create the initial state and path.
+    state = problem.getStartState()
+    path = []
+
+    # If the starting point is the goal, return the path.
+    if problem.isGoalState(state):
+        return path
+
+    # Create a Queue and push the initial start state.
+    frontier = util.Queue()
+    frontier.push((state, path))
+
+    # Create a set of visited states.
+    visited = set()
+
+    # Continuosly search for the next possible successor until a goal state is found.
+    while not frontier.isEmpty():
+        state, path = frontier.pop()
+
+        # If the current state is the goal, return the path.
+        if problem.isGoalState(state):
+            return path
+
+        # Add the current state to the set.
+        visited.add(state)
+
+        # Add every state in the frontier/queue to a list.
+        states_in_queue = []
+        for s in frontier.list:
+            states_in_queue.append(s[0])
+
+        # Check for each possible successor given the current state.
+        for successor in problem.getSuccessors(state):
+
+            # Set state and path for the current successor.
+            successor_state, successor_path = successor[0], (path + [successor[1]])
+
+            # If the first node has not been visited, push it to the frontier.
+            if successor[0] not in visited and successor[0] not in states_in_queue:
+                frontier.push((successor_state, successor_path))
+
+    # Return an empty path if no goal state is found.
+    return []
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # Create the initial state and path.
+    state = problem.getStartState()
+    path = []
+
+    # If the starting point is the goal, return the path.
+    if problem.isGoalState(state):
+        return path
+
+    # Create a PriorityQueue and push the initial start state.
+    frontier = util.PriorityQueue()
+    frontier.push((state, path), 0)
+
+    # Create a set of visited states.
+    visited = set()
+
+    # Continuosly search for the next possible successor until a goal state is found.
+    while not frontier.isEmpty():
+        state, path = frontier.pop()
+
+        # If the current state is the goal, return the path.
+        if problem.isGoalState(state):
+            return path
+
+        # Add the current state to the set.
+        visited.add(state)
+
+        # Add every state in the frontier/priority queue to a list.
+        states_in_priority_queue = []
+        for s in frontier.heap:
+            states_in_priority_queue.append(s[2][0])
+
+        # Check for each possible successor given the current state.
+        for successor in problem.getSuccessors(state):
+
+            # Set state and path for the current successor.
+            successor_state, successor_path = successor[0], (path + [successor[1]])
+            path_cost = problem.getCostOfActions(successor_path)
+
+            if successor_state not in visited and successor_state not in states_in_priority_queue:
+                frontier.push((successor_state, successor_path), path_cost)
+
+            # If the state has already been visited, compare and update the costs of its path.
+            else:
+                # Loop through the PriorityQueue list until the current successor is found inside it.
+                for i in range(len(states_in_priority_queue)):
+                    if successor_state == states_in_priority_queue[i]:
+                        stored_cost = frontier.heap[i][0]
+
+                        # If the current path cost is less, update the tuple and push the current successor to the frontier.
+                        if path_cost <= stored_cost:
+                            frontier.heap[i] = (stored_cost, frontier.heap[i][1] , (successor_state, successor_path) )
+                            frontier.update( (successor_state, successor_path), path_cost )
+
+    # Return an empty path if no goal state is found.
+    return []
 
 def nullHeuristic(state, problem=None):
     """
@@ -108,9 +230,64 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
 
+    # Create the initial state and path.
+    state = problem.getStartState()
+    path = []
+
+    # If the starting point is the goal, return the path.
+    if problem.isGoalState(state):
+        return path
+
+    # TODO:
+
+    # Create a PriorityQueue and push the initial start state.
+    frontier = util.PriorityQueue()
+    frontier.push((state, path), 0)
+
+    # Create a set of visited states.
+    visited = set()
+
+    # Continuosly search for the next possible successor until a goal state is found.
+    while not frontier.isEmpty():
+        state, path = frontier.pop()
+
+        # If the current state is the goal, return the path.
+        if problem.isGoalState(state):
+            return path
+
+        # Add the current state to the set.
+        visited.add(state)
+
+        # Add every state in the frontier/priority queue to a list.
+        states_in_priority_queue = []
+        for s in frontier.heap:
+            states_in_priority_queue.append(s[2][0])
+
+        # Check for each possible successor given the current state.
+        for successor in problem.getSuccessors(state):
+
+            # Set state and path for the current successor.
+            successor_state, successor_path = successor[0], (path + [successor[1]])
+            path_cost = problem.getCostOfActions(successor_path)
+
+            if successor_state not in visited and successor_state not in states_in_priority_queue:
+                frontier.push((successor_state, successor_path), path_cost)
+
+            # If the state has already been visited, compare and update the costs of its path.
+            else:
+                # Loop through the PriorityQueue list until the current successor is found inside it.
+                for i in range(len(states_in_priority_queue)):
+                    if successor_state == states_in_priority_queue[i]:
+                        stored_cost = frontier.heap[i][0]
+
+                        # If the current path cost is less, update the tuple and push the current successor to the frontier.
+                        if path_cost <= stored_cost:
+                            frontier.heap[i] = (stored_cost, frontier.heap[i][1] , (successor_state, successor_path) )
+                            frontier.update( (successor_state, successor_path), path_cost )
+
+    # Return an empty path if no goal state is found.
+    return []
 
 # Abbreviations
 bfs = breadthFirstSearch
