@@ -37,7 +37,6 @@ Good luck and happy searching!
 from game import Directions
 from game import Agent
 from game import Actions
-import util
 import time
 import search
 
@@ -364,6 +363,8 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]: return 999999
         return len(actions)
 
+def manhattanDistance(x, y):
+    return abs(x[0] - y[0]) + abs(x[1] - y[1])
 
 def cornersHeuristic(state, problem):
     """
@@ -381,8 +382,26 @@ def cornersHeuristic(state, problem):
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    # If the current state is a corner, return 0.
+    if problem.isGoalState(state):
+        return 0
+ 
+    # Set a default value for the maximum distance between position and a corner.
+    max_distance = 0
+
+    # This loop will calculate the distance between the position and a corner.
+    visited_corners = state[1]
+    for i in range(len(visited_corners)):
+        # If the corner has not been visited, calculate the Manhattan Distance.
+        if not visited_corners[i]:
+            corner_distance = manhattanDistance(state[0], corners[i])
+
+            # Update the distance if needed.
+            if corner_distance >= max_distance:
+                max_distance = corner_distance
+
+    # Return the maximum distance.
+    return max_distance
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -474,9 +493,41 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
+
+    # If the current state is food, return 0.
+    if problem.isGoalState(state):
+        return 0
+
+    # Provided in instructions.
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    food_coordinates = foodGrid.asList()
+
+    # Set an arbitrary value for the maximum distance.
+    max_distance = 0
+
+    # Set two variables that track two dots with the maximum distance between each other.
+    first_point = food_coordinates[0]
+    second_point = food_coordinates[0]
+
+    # Loop through the grid and calculate the distances between both points.
+    for i in range(len(food_coordinates)):
+        for j in range(i + 1, len(food_coordinates)):
+
+            # Calculate the distance using the Manhattan Distance function.
+            distance = manhattanDistance(food_coordinates[i], food_coordinates[j])
+
+            # Update the max distance and points if needed.
+            if distance >= max_distance:
+                max_distance = distance
+                first_point = food_coordinates[i]
+                second_point = food_coordinates[j]
+ 
+    # Calculate the minimum distance, whether it is the first point or the second point.
+    min_distance = min((manhattanDistance(position, first_point), manhattanDistance(position, second_point)))
+
+    # Return the sum of the maximum of two food points and the minimum distance between
+    # the initial position and the first or second point on the food grid.
+    return max_distance + min_distance
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -506,8 +557,8 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Use the bfs algorithm to efficiently seach for the closest dot.
+        return search.breadthFirstSearch(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -542,8 +593,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         """
         x,y = state
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # If there is food at the current position, return True.
+        return self.food[x][y]
 
 def mazeDistance(point1, point2, gameState):
     """
