@@ -66,15 +66,33 @@ class ReflexAgent(Agent):
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
-        # Useful information you can extract from a GameState (pacman.py)
-        successorGameState = currentGameState.generatePacmanSuccessor(action)
-        newPos = successorGameState.getPacmanPosition()
-        newFood = successorGameState.getFood()
-        newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        successorGameState = currentGameState.generatePacmanSuccessor(action)
+        currentFood = currentGameState.getFood()
+        newPos = successorGameState.getPacmanPosition()
+        ghostPositions = successorGameState.getGhostPositions()
+
+        # Iterate through each possible ghost position.
+        for pos in ghostPositions:
+
+            # Check if a ghost is at the new position or adjacent to it using manhattan distance. Don't move.
+            if pos == newPos or util.manhattanDistance(pos, newPos) == 1:
+                return(float('-inf'))
+
+            # Check if there is food in the new position. Consume the dot if no ghost is nearby.
+            elif currentFood[newPos[0]][newPos[1]]:
+                return float('inf')
+        
+        # Estimate the next food position for the agent.
+        minDist = float('inf')
+        foodList = currentFood.asList()
+        for food in foodList:
+            dist = util.manhattanDistance(food, newPos)
+            if dist < minDist:
+                minDist = dist
+        
+        # Return a state that is closest to a food.
+        return -minDist
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -128,8 +146,60 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        # Retrieve all legal actions as well as set a default maxRes and maxAction.
+        legalActions = gameState.getLegalActions(0)
+        maxRes = float('-inf')
+        maxAction = None
+
+        # Iterate through all legal actions to find the max score.
+        for action in legalActions:
+            # Generate the successor state after Pacman's action.
+            successor = gameState.generateSuccessor(0, action)
+
+            # Calculate the minimum value for the successor state, considering the next agent (ghosts).
+            currentRes = self.minValue(successor, 0, 1)
+
+            # Update maxAction if needed.
+            if currentRes > maxRes:
+                maxRes = currentRes
+                maxAction = action
+        return maxAction
+
+    def minValue(self, gameState, currDepth, currAgent):
+        """
+          Returns the minimum value for a given game state and current agent.
+        """
+
+        # Check if the game is over or we've reached the maximum depth.
+        if gameState.isWin() or gameState.isLose() or currDepth == self.depth:
+            return self.evaluationFunction(gameState)
+
+        legalActions = gameState.getLegalActions(currAgent)
+        successors = [gameState.generateSuccessor(currAgent, action) for action in legalActions]
+        agents = gameState.getNumAgents()
+
+        if currAgent < agents - 1:
+            # There are still some ghosts to choose their moves, so increase the agent index and call minValue again.
+            return min([self.minValue(s, currDepth, currAgent + 1) for s in successors])
+        else:
+            # Depth is increased when it is max's turn.
+            return min([self.maxValue(s, currDepth + 1) for s in successors])
+    
+    def maxValue(self, gameState, currDepth):
+        """
+        Returns the maximum value for a given game state for Pacman.
+        """
+
+        # Check if the game is over or we've reached the maximum depth.
+        if gameState.isWin() or gameState.isLose() or currDepth == self.depth:
+            return self.evaluationFunction(gameState)
+
+        legalActions = gameState.getLegalActions(0)
+        successors = [gameState.generateSuccessor(0, action) for action in legalActions]
+
+        # Pacman plays next, we compute the maximum value of the successor states.
+        return max([self.minValue(s, currDepth, 1) for s in successors])
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
